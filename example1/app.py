@@ -51,6 +51,23 @@ if selected_file:
     sc1.metric("Total Tests", total_tests)
     sc2.metric("Pass ✅", pass_count)
     sc3.metric("Fail ❌", fail_count)
+else:
+    st.info("No test results found in the data directory.")
+ed'
+        return f'color: {color}; font-weight: bold'
+
+    st.table(df.style.applymap(color_status, subset=['status']))
+
+    # Statistics Summary
+    total_tests = len(df)
+    pass_count = len(df[df['status'] == 'Pass'])
+    fail_count = len(df[df['status'] == 'Fail'])
+
+    st.write("---")
+    sc1, sc2, sc3 = st.columns(3)
+    sc1.metric("Total Tests", total_tests)
+    sc2.metric("Pass ✅", pass_count)
+    sc3.metric("Fail ❌", fail_count)
 
     # Historical Pass Rate Chart
     st.write("### 📈 Pass Rate Trend")
