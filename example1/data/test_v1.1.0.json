@@ -1,0 +1,71 @@
+{
+  "firmware_version": "1.1.0",
+  "test_date": "2026-04-03",
+  "results": [
+    {
+      "test_name": "booting test",
+      "status": "Pass",
+      "duration": "0.6s"
+    },
+    {
+      "test_name": "basic I/O test",
+      "status": "Pass",
+      "duration": "0.6s"
+    },
+    {
+      "test_name": "reset test",
+      "status": "Fail",
+      "duration": "0.6s"
+    },
+    {
+      "test_name": "Sequential Read",
+      "status": "Pass",
+      "duration": "0.6s"
+    },
+    {
+      "test_name": "Sequential Write",
+      "status": "Pass",
+      "duration": "0.6s"
+    },
+    {
+      "test_name": "Random Read 4K",
+      "status": "Pass",
+      "duration": "0.6s"
+    },
+    {
+      "test_name": "Random Write 4K",
+      "status": "Pass",
+      "duration": "0.6s"
+    },
+    {
+      "test_name": "Power Cycle Stability",
+      "status": "Pass",
+      "duration": "0.6s"
+    },
+    {
+      "test_name": "S.M.A.R.T. Health Check",
+      "status": "Pass",
+      "duration": "0.6s"
+    },
+    {
+      "test_name": "Latency Under Load",
+      "status": "Fail",
+      "duration": "0.6s"
+    },
+    {
+      "test_name": "ECC Error Correction",
+      "status": "Pass",
+      "duration": "0.6s"
+    },
+    {
+      "test_name": "Trim Command Verification",
+      "status": "Pass",
+      "duration": "0.6s"
+    },
+    {
+      "test_name": "Thermal Throttling Test",
+      "status": "Fail",
+      "duration": "0.6s"
+    }
+  ]
+}
