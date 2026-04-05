@@ -1,3 +1,8 @@
+---
+name: sensor-test-expert
+description: 센서 데이터 처리 로직에 특화된 유닛 테스트를 설계하고 작성하는 전문가 모드입니다.
+---
+
 # Skill: Sensor Test Expert
 
 이 스킬은 센서 데이터 처리 로직에 특화된 유닛 테스트를 설계하고 작성하는 전문가 모드입니다.
