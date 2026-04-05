@@ -1,0 +1,14 @@
+# Python 가상 환경
+venv/
+.venv/
+*/venv/
+*/.venv/
+
+# Python 컴파일 파일
+__pycache__/
+*.py[cod]
+*$py.class
+
+# OS 관련 파일
+.DS_Store
+Thumbs.db
