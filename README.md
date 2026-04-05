@@ -78,14 +78,51 @@ Gemini CLI의 기능을 특정 도메인에 특화시키는 **'Skill(스킬)'** 
 - `example2/skill.md`: **[핵심]** 전문가 페르소나와 테스트 규칙이 정의된 스킬 파일
 - `example2/test_processor.py`: 스킬을 통해 생성된 고품질 테스트 코드
 
-#### 🔄 Skill 적용 전 vs 후
-- **Skill 적용 전 (일반 Chat)**: "이 코드에 대한 테스트를 짜줘"라고 요청하면, 기본적인 성공 케이스 위주의 일반적인 테스트 코드를 생성합니다.
-- **Skill 적용 후 (activate_skill)**: `example2/skill.md`를 활성화한 뒤 요청하면:
-    1. **페르소나 장착**: 10년 차 QA 엔지니어의 관점에서 코드를 분석합니다.
-    2. **도메인 특화**: 센서 데이터의 특수성(경계값, 타입 혼합 등)을 반영한 **심층 테스트 케이스**를 자율적으로 도출합니다.
-    3. **표준 준수**: 팀에서 정의한 `pytest` 컨벤션과 한글 주석 규칙을 완벽히 따릅니다.
+#### 🔄 Skill 적용 전 vs 후 (코드 비교)
 
-> **핵심 가치**: "팀의 노하우가 담긴 `skill.md`를 자산화함으로써, 주니어 개발자도 시니어 수준의 검증 환경을 즉시 구축할 수 있습니다."
+1. **대상 로직 (`example2/processor.py`)**
+```python
+def process_sensor_data(data):
+    if not isinstance(data, list):
+        raise ValueError("입력값은 리스트여야 합니다.")
+    valid_readings = [r for r in data if isinstance(r, (int, float)) and 0 <= r <= 100]
+    if not valid_readings:
+        raise ValueError("유효한 센서 데이터(0-100)가 없습니다.")
+    return sum(valid_readings) / len(valid_readings)
+```
+
+2. **Skill 적용 전 (일반 모드)**: 기본적인 성공/실패 케이스만 검증
+```python
+def test_basic_average():
+    assert process_sensor_data([10, 20, 30]) == 20.0
+
+def test_empty_list():
+    with pytest.raises(ValueError):
+        process_sensor_data([])
+
+def test_single_value():
+    assert process_sensor_data([50]) == 50.0
+```
+
+3. **Skill 적용 후 (Sensor Test Expert)**: 경계값, 타입 혼합 등 실무 시나리오 완벽 커버
+```python
+# 2. Boundary Values (경계값 케이스: 0과 100)
+def test_process_boundary_values():
+    data = [0, 50, 100]
+    assert process_sensor_data(data) == 50.0
+
+# 3. Mixed Types (유효하지 않은 데이터가 섞인 경우)
+def test_process_mixed_data_types():
+    data = ["error", None, -10, 110, 50]
+    assert process_sensor_data(data) == 50.0
+
+# 5. Exception: No valid data (유효한 데이터가 없는 경우)
+def test_no_valid_data():
+    with pytest.raises(ValueError, match="유효한 센서 데이터"):
+        process_sensor_data([-1, 101, "invalid"])
+```
+
+> **핵심 가치**: "팀의 노하우가 담긴 `SKILL.md`를 자산화함으로써, 주니어 개발자도 시니어 수준의 검증 환경을 즉시 구축할 수 있습니다."
 
 ## 7. 데모 시나리오
 오늘 발표에서는 다음과 같은 실무 예시를 함께 살펴볼 예정입니다.
