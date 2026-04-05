@@ -15,6 +15,17 @@ data_dir = os.path.join(current_dir, 'data')
 json_files = [f for f in os.listdir(data_dir) if f.endswith('.json')]
 json_files.sort(reverse=True)
 
+# Map version to filename for easy lookup
+ver_to_file = {}
+for f in json_files:
+    with open(os.path.join(data_dir, f), 'r') as jf:
+        d = json.load(jf)
+        ver_to_file[d['firmware_version']] = f
+
+# Initialize session state for the selected file
+if 'selected_file' not in st.session_state:
+    st.session_state.selected_file = json_files[0]
+
 # Historical Pass Rate Chart
 st.write("### 📈 Pass Rate Trend")
 st.info("💡 Click a bar in the chart to see detailed test results for that version.")
@@ -27,20 +38,23 @@ for f in json_files:
         pass_rate = (len([r for r in res if r['status'] == 'Pass']) / len(res)) * 100
         all_data.append({
             "Version": d['firmware_version'], 
-            "Pass Rate (%)": pass_rate,
-            "filename": f
+            "Pass Rate (%)": pass_rate
         })
 
 chart_df = pd.DataFrame(all_data).sort_values("Version")
 
 # Altair Chart with Selection
+# Highlight the bar if it matches the current selection in session state
 selection = alt.selection_point(fields=['Version'], name='selector')
-color = alt.condition(selection, alt.value('steelblue'), alt.value('lightgray'))
 
 chart = alt.Chart(chart_df).mark_bar().encode(
     x=alt.X('Version:N', sort='ascending'),
     y='Pass Rate (%):Q',
-    color=color,
+    color=alt.condition(
+        alt.datum.Version == (st.session_state.selected_file.replace('test_v', '').replace('.json', '')),
+        alt.value('steelblue'),
+        alt.value('lightgray')
+    ),
     tooltip=['Version', 'Pass Rate (%)']
 ).add_params(
     selection
@@ -48,42 +62,39 @@ chart = alt.Chart(chart_df).mark_bar().encode(
     height=300
 )
 
-# Handle selection using session state and a trick with altair
+# Handle chart selection
 event_dict = st.altair_chart(chart, use_container_width=True, on_select="rerun")
 
-# Determine which file to select
-selected_version = None
+# If a bar is clicked, update session state
 if event_dict and "selection" in event_dict and "selector" in event_dict["selection"]:
     selected_points = event_dict["selection"]["selector"]
     if selected_points:
-        selected_version = selected_points[0].get("Version")
+        clicked_version = selected_points[0].get("Version")
+        if clicked_version in ver_to_file:
+            st.session_state.selected_file = ver_to_file[clicked_version]
+            st.rerun()
 
 # Sidebar selection
 st.sidebar.header("Filter")
 
-# Synchronize chart selection with sidebar
-default_idx = 0
-if selected_version:
-    try:
-        # Find index of the file corresponding to selected version
-        for i, f in enumerate(json_files):
-            if selected_version in f:
-                default_idx = i
-                break
-    except:
-        pass
-
+# Selectbox uses session state
 selected_file = st.sidebar.selectbox(
     "Select Firmware Version", 
     json_files, 
-    index=default_idx,
-    key="selectbox_selection"
+    index=json_files.index(st.session_state.selected_file),
+    key="selectbox_sync"
 )
+
+# If sidebar changes, update session state
+if selected_file != st.session_state.selected_file:
+    st.session_state.selected_file = selected_file
+    st.rerun()
 
 st.markdown("---")
 
-if selected_file:
-    file_path = os.path.join(data_dir, selected_file)
+# Display Details
+if st.session_state.selected_file:
+    file_path = os.path.join(data_dir, st.session_state.selected_file)
     with open(file_path, 'r') as f:
         data = json.load(f)
 
