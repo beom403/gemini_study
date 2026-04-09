@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Agent vs Chatbot</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+KR:wght@300;400;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+–bot-color: #4a9eff;
+–agent-color: #ff6b35;
+–bg: #0a0a0f;
+–surface: #111118;
+–border: #1e1e2e;
+–text: #e8e8f0;
+–muted: #5a5a7a;
+}
+
+body {
+background: var(–bg);
+color: var(–text);
+font-family: ‘Noto Sans KR’, sans-serif;
+min-height: 100vh;
+overflow-x: hidden;
+}
+
+/* Grid noise texture */
+body::before {
+content: ‘’;
+position: fixed;
+inset: 0;
+background-image:
+linear-gradient(rgba(255,255,255,.015) 1px, transparent 1px),
+linear-gradient(90deg, rgba(255,255,255,.015) 1px, transparent 1px);
+background-size: 40px 40px;
+pointer-events: none;
+z-index: 0;
+}
+
+.wrapper {
+position: relative;
+z-index: 1;
+max-width: 1000px;
+margin: 0 auto;
+padding: 48px 24px 80px;
+}
+
+/* HEADER */
+.header {
+text-align: center;
+margin-bottom: 60px;
+animation: fadeDown .8s ease both;
+}
+
+.header-tag {
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 11px;
+letter-spacing: .2em;
+text-transform: uppercase;
+color: var(–muted);
+margin-bottom: 16px;
+}
+
+.header h1 {
+font-family: ‘Bebas Neue’, sans-serif;
+font-size: clamp(42px, 8vw, 80px);
+letter-spacing: .05em;
+line-height: 1;
+background: linear-gradient(135deg, var(–bot-color), #fff 50%, var(–agent-color));
+-webkit-background-clip: text;
+-webkit-text-fill-color: transparent;
+background-clip: text;
+margin-bottom: 14px;
+}
+
+.header p {
+color: var(–muted);
+font-size: 14px;
+font-weight: 300;
+letter-spacing: .05em;
+}
+
+/* COMPARISON GRID */
+.compare-grid {
+display: grid;
+grid-template-columns: 1fr 60px 1fr;
+gap: 0;
+margin-bottom: 60px;
+}
+
+.col-header {
+display: flex;
+flex-direction: column;
+align-items: center;
+gap: 10px;
+padding: 24px 0 32px;
+animation: fadeDown .8s .15s ease both;
+}
+
+.col-icon {
+width: 56px;
+height: 56px;
+border-radius: 14px;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 24px;
+position: relative;
+}
+.col-icon.bot { background: rgba(74,158,255,.12); border: 1px solid rgba(74,158,255,.3); }
+.col-icon.agent { background: rgba(255,107,53,.12); border: 1px solid rgba(255,107,53,.3); }
+
+.col-label {
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 10px;
+letter-spacing: .18em;
+text-transform: uppercase;
+color: var(–muted);
+}
+
+.col-title {
+font-family: ‘Bebas Neue’, sans-serif;
+font-size: 26px;
+letter-spacing: .08em;
+}
+.col-title.bot { color: var(–bot-color); }
+.col-title.agent { color: var(–agent-color); }
+
+.col-example {
+font-size: 11px;
+color: var(–muted);
+font-family: ‘JetBrains Mono’, monospace;
+}
+
+.divider-col {
+display: flex;
+align-items: center;
+justify-content: center;
+}
+
+/* ROWS */
+.row-wrapper {
+display: contents;
+}
+
+.row-cell {
+padding: 18px 20px;
+border: 1px solid var(–border);
+position: relative;
+animation: fadeUp .6s ease both;
+}
+
+.row-cell:nth-child(6n+4) { animation-delay: .1s; }
+.row-cell:nth-child(6n+5) { animation-delay: .15s; }
+.row-cell:nth-child(6n+6) { animation-delay: .2s; }
+
+.row-cell.bot-cell {
+border-right: none;
+background: rgba(74,158,255,.025);
+}
+.row-cell.agent-cell {
+border-left: none;
+background: rgba(255,107,53,.025);
+}
+.row-cell.bot-cell:hover { background: rgba(74,158,255,.06); }
+.row-cell.agent-cell:hover { background: rgba(255,107,53,.06); }
+
+/* Remove duplicate borders */
+.row-cell { margin-top: -1px; }
+
+.row-label {
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 9px;
+letter-spacing: .15em;
+text-transform: uppercase;
+margin-bottom: 8px;
+opacity: .5;
+}
+
+.row-content {
+font-size: 14px;
+font-weight: 400;
+line-height: 1.6;
+color: #c8c8e0;
+}
+
+.row-content strong {
+font-weight: 700;
+color: var(–text);
+}
+
+.mid-badge {
+writing-mode: vertical-rl;
+text-orientation: mixed;
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 9px;
+letter-spacing: .2em;
+color: var(–muted);
+text-transform: uppercase;
+display: flex;
+align-items: center;
+justify-content: center;
+border-left: 1px solid var(–border);
+border-right: 1px solid var(–border);
+background: var(–surface);
+padding: 0 6px;
+margin-top: -1px;
+}
+
+/* VISUAL DIAGRAMS */
+.diagrams {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 2px;
+margin-bottom: 60px;
+}
+
+.diagram-box {
+background: var(–surface);
+border: 1px solid var(–border);
+padding: 28px;
+animation: fadeUp .8s .3s ease both;
+}
+
+.diagram-title {
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 10px;
+letter-spacing: .18em;
+text-transform: uppercase;
+margin-bottom: 24px;
+}
+.diagram-title.bot { color: var(–bot-color); }
+.diagram-title.agent { color: var(–agent-color); }
+
+/* Chatbot flow: linear */
+.flow-linear {
+display: flex;
+flex-direction: column;
+gap: 6px;
+align-items: center;
+}
+.flow-node {
+width: 100%;
+max-width: 220px;
+padding: 10px 16px;
+border-radius: 6px;
+font-size: 12px;
+text-align: center;
+font-weight: 500;
+}
+.flow-node.user { background: rgba(74,158,255,.15); border: 1px solid rgba(74,158,255,.3); color: var(–bot-color); }
+.flow-node.model { background: rgba(255,255,255,.06); border: 1px solid var(–border); color: var(–text); }
+.flow-node.out { background: rgba(74,158,255,.08); border: 1px solid rgba(74,158,255,.2); color: #8ab4e8; }
+.flow-arrow {
+font-size: 14px;
+color: var(–muted);
+line-height: 1;
+}
+.flow-note {
+font-size: 10px;
+color: var(–muted);
+text-align: center;
+margin-top: 12px;
+font-family: ‘JetBrains Mono’, monospace;
+letter-spacing: .05em;
+}
+
+/* Agent flow: cyclic */
+.agent-loop {
+position: relative;
+width: 100%;
+height: 200px;
+}
+
+.agent-loop svg {
+width: 100%;
+height: 100%;
+overflow: visible;
+}
+
+/* CAPABILITY BARS */
+.caps-section {
+margin-bottom: 60px;
+animation: fadeUp .8s .4s ease both;
+}
+
+.caps-title {
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 10px;
+letter-spacing: .2em;
+text-transform: uppercase;
+color: var(–muted);
+margin-bottom: 24px;
+text-align: center;
+}
+
+.cap-row {
+display: grid;
+grid-template-columns: 140px 1fr 1fr;
+align-items: center;
+gap: 12px;
+margin-bottom: 14px;
+}
+
+.cap-name {
+font-size: 12px;
+color: var(–muted);
+text-align: right;
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 10px;
+letter-spacing: .05em;
+}
+
+.bar-track {
+height: 8px;
+background: rgba(255,255,255,.05);
+border-radius: 4px;
+overflow: hidden;
+position: relative;
+}
+
+.bar-fill {
+height: 100%;
+border-radius: 4px;
+position: relative;
+transform-origin: left;
+animation: growBar 1s .5s ease both;
+}
+
+.bar-fill.bot { background: linear-gradient(90deg, rgba(74,158,255,.5), var(–bot-color)); }
+.bar-fill.agent { background: linear-gradient(90deg, rgba(255,107,53,.5), var(–agent-color)); }
+
+@keyframes growBar {
+from { transform: scaleX(0); }
+to { transform: scaleX(1); }
+}
+
+/* BOTTOM SUMMARY */
+.summary {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 2px;
+animation: fadeUp .8s .5s ease both;
+}
+
+.summary-box {
+padding: 28px 24px;
+border: 1px solid var(–border);
+position: relative;
+overflow: hidden;
+}
+
+.summary-box::before {
+content: ‘’;
+position: absolute;
+inset: 0;
+opacity: .06;
+}
+.summary-box.bot::before { background: var(–bot-color); }
+.summary-box.agent::before { background: var(–agent-color); }
+
+.summary-box h3 {
+font-family: ‘Bebas Neue’, sans-serif;
+font-size: 20px;
+letter-spacing: .1em;
+margin-bottom: 12px;
+}
+.summary-box.bot h3 { color: var(–bot-color); }
+.summary-box.agent h3 { color: var(–agent-color); }
+
+.summary-box ul {
+list-style: none;
+display: flex;
+flex-direction: column;
+gap: 8px;
+}
+
+.summary-box li {
+font-size: 12.5px;
+color: #a0a0c0;
+padding-left: 16px;
+position: relative;
+line-height: 1.5;
+}
+
+.summary-box.bot li::before { content: ‘→’; position: absolute; left: 0; color: var(–bot-color); }
+.summary-box.agent li::before { content: ‘⟳’; position: absolute; left: 0; color: var(–agent-color); }
+
+/* Animations */
+@keyframes fadeDown {
+from { opacity: 0; transform: translateY(-20px); }
+to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeUp {
+from { opacity: 0; transform: translateY(20px); }
+to { opacity: 1; transform: translateY(0); }
+}
+
+/* Rotating ring for agent diagram */
+@keyframes spinSlow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes pulse { 0%,100% { opacity: .6; } 50% { opacity: 1; } }
+.spin-anim { animation: spinSlow 8s linear infinite; transform-origin: center; }
+.pulse-anim { animation: pulse 2s ease-in-out infinite; }
+
+@media (max-width: 600px) {
+.compare-grid { grid-template-columns: 1fr 30px 1fr; }
+.diagrams, .summary { grid-template-columns: 1fr; }
+.cap-row { grid-template-columns: 80px 1fr 1fr; }
+.mid-badge { font-size: 7px; }
+}
+</style>
+
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- HEADER -->
+
+  <div class="header">
+    <div class="header-tag">// Technical Comparison · 2025</div>
+    <h1>Chatbot vs AI Agent</h1>
+    <p>단순 응답 머신과 자율 실행 시스템의 구조적 차이</p>
+  </div>
+
+  <!-- MAIN COMPARISON TABLE -->
+
+  <div class="compare-grid">
+
+```
+<!-- Column Headers -->
+<div class="col-header" style="text-align:center;">
+  <div class="col-icon bot">💬</div>
+  <div class="col-label">Simple</div>
+  <div class="col-title bot">Chatbot</div>
+  <div class="col-example">ChatGPT · Gemini Basic</div>
+</div>
+<div class="divider-col"></div>
+<div class="col-header" style="text-align:center;">
+  <div class="col-icon agent">⚡</div>
+  <div class="col-label">Autonomous</div>
+  <div class="col-title agent">AI Agent</div>
+  <div class="col-example">Claude Code · Gemini Agent</div>
+</div>
+
+<!-- Row: 목표 -->
+<div class="row-cell bot-cell">
+  <div class="row-label">목표 설정</div>
+  <div class="row-content">사용자가 <strong>매 단계 지시</strong>를 내려야 함. 다음 행동을 스스로 결정 불가.</div>
+</div>
+<div class="mid-badge">GOAL</div>
+<div class="row-cell agent-cell">
+  <div class="row-label">목표 설정</div>
+  <div class="row-content">최종 목표만 주면 <strong>하위 작업을 스스로 분해</strong>하고 계획 수립.</div>
+</div>
+
+<!-- Row: 도구 사용 -->
+<div class="row-cell bot-cell">
+  <div class="row-label">도구 사용</div>
+  <div class="row-content">기본적으로 <strong>텍스트 생성만</strong> 가능. 외부 연동은 제한적.</div>
+</div>
+<div class="mid-badge">TOOLS</div>
+<div class="row-cell agent-cell">
+  <div class="row-label">도구 사용</div>
+  <div class="row-content">파일 시스템, 웹, API, 코드 실행 등 <strong>다양한 툴을 자율 호출</strong>.</div>
+</div>
+
+<!-- Row: 메모리 -->
+<div class="row-cell bot-cell">
+  <div class="row-label">메모리 / 상태</div>
+  <div class="row-content">대화 창 내 <strong>단기 컨텍스트만</strong> 유지. 세션 종료 시 리셋.</div>
+</div>
+<div class="mid-badge">MEM</div>
+<div class="row-cell agent-cell">
+  <div class="row-label">메모리 / 상태</div>
+  <div class="row-content">작업 진행 상태, 파일, 결과를 <strong>지속 추적·저장</strong>하며 실행.</div>
+</div>
+
+<!-- Row: 피드백 루프 -->
+<div class="row-cell bot-cell">
+  <div class="row-label">피드백 루프</div>
+  <div class="row-content">Input → Output <strong>1회성 응답</strong>. 결과를 반영해 재시도 없음.</div>
+</div>
+<div class="mid-badge">LOOP</div>
+<div class="row-cell agent-cell">
+  <div class="row-label">피드백 루프</div>
+  <div class="row-content">실행 결과를 <strong>관찰 → 판단 → 재시도</strong>하는 반복 루프 수행.</div>
+</div>
+
+<!-- Row: 사용 예시 -->
+<div class="row-cell bot-cell">
+  <div class="row-label">적합한 사례</div>
+  <div class="row-content">Q&A, 번역, 요약, 간단한 콘텐츠 생성 등 <strong>즉각적인 응답</strong>.</div>
+</div>
+<div class="mid-badge">USE</div>
+<div class="row-cell agent-cell">
+  <div class="row-label">적합한 사례</div>
+  <div class="row-content">코드베이스 리팩토링, 자동화 파이프라인, 복잡한 <strong>멀티스텝 작업</strong>.</div>
+</div>
+```
+
+  </div>
+
+  <!-- DIAGRAMS -->
+
+  <div class="diagrams">
+    <!-- Chatbot flow -->
+    <div class="diagram-box">
+      <div class="diagram-title bot">// Chatbot Flow — Linear</div>
+      <div class="flow-linear">
+        <div class="flow-node user">👤 User Input</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-node model">🧠 LLM Process</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-node out">📤 Text Output</div>
+        <div class="flow-arrow" style="opacity:.3">↓</div>
+        <div class="flow-node user" style="opacity:.35; font-size:11px;">👤 Next Input (수동)</div>
+      </div>
+      <div class="flow-note">단방향 · 사용자 주도 · 도구 없음</div>
+    </div>
+
+```
+<!-- Agent loop -->
+<div class="diagram-box">
+  <div class="diagram-title agent">// Agent Loop — Cyclic</div>
+  <div class="agent-loop">
+    <svg viewBox="0 0 280 200" xmlns="http://www.w3.org/2000/svg">
+      <!-- Outer orbit ring -->
+      <circle cx="140" cy="100" r="72" fill="none" stroke="rgba(255,107,53,.15)" stroke-width="1" stroke-dasharray="4 6" class="spin-anim"/>
+
+      <!-- Arrows around ring -->
+      <g>
+        <!-- Top arrow -->
+        <path d="M140,28 L147,20 L140,25 L133,20 Z" fill="rgba(255,107,53,.5)"/>
+        <!-- Right arrow -->
+        <path d="M212,100 L220,107 L215,100 L220,93 Z" fill="rgba(255,107,53,.5)"/>
+        <!-- Bottom arrow -->
+        <path d="M140,172 L133,180 L140,175 L147,180 Z" fill="rgba(255,107,53,.5)"/>
+        <!-- Left arrow -->
+        <path d="M68,100 L60,93 L65,100 L60,107 Z" fill="rgba(255,107,53,.5)"/>
+      </g>
+
+      <!-- Center: LLM Core -->
+      <circle cx="140" cy="100" r="32" fill="rgba(255,107,53,.12)" stroke="rgba(255,107,53,.4)" stroke-width="1.5" class="pulse-anim"/>
+      <text x="140" y="95" text-anchor="middle" fill="#ff6b35" font-size="13" font-family="JetBrains Mono, monospace" font-weight="700">LLM</text>
+      <text x="140" y="111" text-anchor="middle" fill="rgba(255,107,53,.7)" font-size="9" font-family="JetBrains Mono, monospace">CORE</text>
+
+      <!-- Orbit nodes -->
+      <!-- Plan (top) -->
+      <rect x="108" y="4" width="64" height="24" rx="5" fill="rgba(255,107,53,.18)" stroke="rgba(255,107,53,.4)" stroke-width="1"/>
+      <text x="140" y="20" text-anchor="middle" fill="#ff8c60" font-size="10" font-family="Noto Sans KR, sans-serif" font-weight="700">📋 계획 수립</text>
+
+      <!-- Act (right) -->
+      <rect x="220" y="88" width="56" height="24" rx="5" fill="rgba(255,200,50,.15)" stroke="rgba(255,200,50,.35)" stroke-width="1"/>
+      <text x="248" y="104" text-anchor="middle" fill="#ffc832" font-size="10" font-family="Noto Sans KR, sans-serif" font-weight="700">⚡ 실행</text>
+
+      <!-- Observe (bottom) -->
+      <rect x="108" y="172" width="64" height="24" rx="5" fill="rgba(100,220,180,.12)" stroke="rgba(100,220,180,.3)" stroke-width="1"/>
+      <text x="140" y="188" text-anchor="middle" fill="#64dcb4" font-size="10" font-family="Noto Sans KR, sans-serif" font-weight="700">🔍 관찰</text>
+
+      <!-- Reflect (left) -->
+      <rect x="4" y="88" width="56" height="24" rx="5" fill="rgba(180,130,255,.15)" stroke="rgba(180,130,255,.3)" stroke-width="1"/>
+      <text x="32" y="104" text-anchor="middle" fill="#b482ff" font-size="10" font-family="Noto Sans KR, sans-serif" font-weight="700">💡 판단</text>
+
+      <!-- Tools floating -->
+      <text x="196" y="60" fill="rgba(255,255,255,.25)" font-size="9" font-family="JetBrains Mono, monospace">🔧 Tools</text>
+      <text x="64" y="148" fill="rgba(255,255,255,.25)" font-size="9" font-family="JetBrains Mono, monospace">📁 Files</text>
+      <text x="188" y="150" fill="rgba(255,255,255,.25)" font-size="9" font-family="JetBrains Mono, monospace">🌐 Web</text>
+      <text x="70" y="58" fill="rgba(255,255,255,.25)" font-size="9" font-family="JetBrains Mono, monospace">💻 Code</text>
+    </svg>
+  </div>
+  <div class="flow-note" style="color:rgba(255,107,53,.6);">자율 루프 · 툴 호출 · 목표 달성까지 반복</div>
+</div>
+```
+
+  </div>
+
+  <!-- CAPABILITY BARS -->
+
+  <div class="caps-section">
+    <div class="caps-title">// 능력치 비교</div>
+
+```
+<div class="cap-row">
+  <div class="cap-name">자율성</div>
+  <div class="bar-track"><div class="bar-fill bot" style="width:20%"></div></div>
+  <div class="bar-track"><div class="bar-fill agent" style="width:95%"></div></div>
+</div>
+<div class="cap-row">
+  <div class="cap-name">멀티스텝 실행</div>
+  <div class="bar-track"><div class="bar-fill bot" style="width:10%"></div></div>
+  <div class="bar-track"><div class="bar-fill agent" style="width:90%"></div></div>
+</div>
+<div class="cap-row">
+  <div class="cap-name">도구 통합</div>
+  <div class="bar-track"><div class="bar-fill bot" style="width:15%"></div></div>
+  <div class="bar-track"><div class="bar-fill agent" style="width:92%"></div></div>
+</div>
+<div class="cap-row">
+  <div class="cap-name">오류 복구</div>
+  <div class="bar-track"><div class="bar-fill bot" style="width:5%"></div></div>
+  <div class="bar-track"><div class="bar-fill agent" style="width:80%"></div></div>
+</div>
+<div class="cap-row">
+  <div class="cap-name">응답 속도</div>
+  <div class="bar-track"><div class="bar-fill bot" style="width:95%"></div></div>
+  <div class="bar-track"><div class="bar-fill agent" style="width:55%"></div></div>
+</div>
+<div class="cap-row">
+  <div class="cap-name">사용 단순성</div>
+  <div class="bar-track"><div class="bar-fill bot" style="width:90%"></div></div>
+  <div class="bar-track"><div class="bar-fill agent" style="width:50%"></div></div>
+</div>
+
+<div style="display:flex; gap:24px; justify-content:flex-end; margin-top:14px;">
+  <div style="display:flex; gap:8px; align-items:center; font-size:11px; color:var(--muted);">
+    <div style="width:24px; height:6px; border-radius:3px; background:var(--bot-color);"></div> Chatbot
+  </div>
+  <div style="display:flex; gap:8px; align-items:center; font-size:11px; color:var(--muted);">
+    <div style="width:24px; height:6px; border-radius:3px; background:var(--agent-color);"></div> AI Agent
+  </div>
+</div>
+```
+
+  </div>
+
+  <!-- SUMMARY -->
+
+  <div class="summary">
+    <div class="summary-box bot">
+      <h3>Chatbot 요약</h3>
+      <ul>
+        <li>질문-응답 패턴에 최적화</li>
+        <li>사람이 모든 단계를 안내해야 함</li>
+        <li>빠르고 예측 가능한 결과</li>
+        <li>외부 세계와 상호작용 불가</li>
+        <li>도구 없이 언어만으로 작동</li>
+      </ul>
+    </div>
+    <div class="summary-box agent">
+      <h3>AI Agent 요약</h3>
+      <ul>
+        <li>목표만 주면 경로를 스스로 결정</li>
+        <li>계획 → 실행 → 관찰 루프 반복</li>
+        <li>파일·코드·웹 등 도구 자율 활용</li>
+        <li>실패 시 전략을 수정하며 재시도</li>
+        <li>복잡한 장기 작업 처리 가능</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
